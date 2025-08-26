@@ -1,11 +1,17 @@
 // Archivo: src/components/Sidebar.jsx (CORREGIDO)
 import React, { useState, useEffect } from 'react';
-import { Link, NavLink } from 'react-router-dom';
-import { LayoutDashboard, Wallet, Archive, Calendar, Tractor, Bell, LogOut } from 'lucide-react';
-// 1. IMPORTAMOS 'auth' Y 'db' DIRECTAMENTE
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import { LayoutDashboard, Wallet, Archive, Calendar, Tractor, Bell, LogOut, Home } from 'lucide-react';
 import { db, auth } from '../firebase';
-import { signOut } from 'firebase/auth'; 
+import { signOut } from 'firebase/auth';
 import { collection, query, where, onSnapshot } from 'firebase/firestore';
+
+const IconHome = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M12 3l9 8h-3v9h-5v-6H11v6H6v-9H3l9-8z" fill="currentColor"/>
+  </svg>
+);
+
 
 const navLinks = [
   { to: "/dashboard", icon: LayoutDashboard, label: "Dashboard" },
@@ -17,6 +23,21 @@ const navLinks = [
 ];
 
 export default function Sidebar() {
+  const [collapsed, setCollapsed] = useState(false);
+  const location = useLocation();
+
+  // Al entrar/cambiar de ruta: abrir y replegar a los 5s
+  useEffect(() => {
+    setCollapsed(false);
+    const t = setTimeout(() => setCollapsed(true), 5000);
+    return () => clearTimeout(t);
+  }, [location.pathname]);
+
+  // Al hacer clic en un enlace: abrir y replegar a los 5s
+  const handleNavClick = () => {
+    setCollapsed(false);
+    setTimeout(() => setCollapsed(true), 5000);
+  };
   const handleLogout = async () => {
     try {
         await signOut(auth);
@@ -57,27 +78,49 @@ export default function Sidebar() {
   const inactiveLinkStyle = "text-gray-400 hover:bg-gray-800 hover:text-white";
 
   return (
-    <aside className="w-64 bg-gray-900/70 backdrop-blur-sm border-r border-gray-800 p-4 flex flex-col">
+    <aside
+      className={`h-screen sticky top-0 bg-[#0f172a] text-white transition-[width] duration-500 ${collapsed ? 'w-16' : 'w-64'} flex flex-col`}
+    >
       <div className="text-center p-4 mb-4">
-        <Link to="/" className="transition-opacity hover:opacity-80">
-          <h1 className="text-2xl font-black text-white tracking-tighter">CLERMO</h1>
+        <Link
+          to="/"
+          onClick={handleNavClick}
+          className="flex items-center justify-center px-3 py-3 h-12 relative"
+          aria-label="Ir al inicio"
+          >
+          {/* Icono casa (siempre montado). Tamaño 24 para igualar percepción con el resto */}
+          <Home
+            size={24}
+            strokeWidth={2}
+            className={`${collapsed ? 'block' : 'hidden'} w-6 h-6 shrink-0`}
+          />
+
+          {/* Texto CLERMO (siempre montado). Más grande y centrado */}
+          <span
+            className={`${collapsed ? 'hidden' : 'block'} text-2xl font-extrabold tracking-wide text-center w-full`}
+          >
+            CLERMO
+          </span>
         </Link>
-      </div>
+
+        </div>
       <nav>
         <ul>
           {navLinks.map(link => (
             <li key={link.to}>
               <NavLink
                 to={link.to}
+                onClick={handleNavClick}
                 className={({ isActive }) => `${linkStyle} ${isActive ? activeLinkStyle : inactiveLinkStyle}`}
+                aria-label={link.label}
               >
                 <div className="relative">
-                    <link.icon {...iconProps} />
-                    {link.label === "Notificaciones" && hasUnread && (
-                        <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-gray-900" />
-                    )}
+                  <link.icon {...iconProps} />
+                  {link.label === "Notificaciones" && hasUnread && (
+                    <span className="absolute -top-0.5 -right-0.5 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-gray-900" />
+                  )}
                 </div>
-                <span className="ml-4 font-semibold">{link.label}</span>
+                {!collapsed && <span className="ml-4 font-semibold">{link.label}</span>}
               </NavLink>
             </li>
           ))}
@@ -85,11 +128,13 @@ export default function Sidebar() {
       </nav>
       <div className="mt-auto"> {/* Esto empuja el botón hacia abajo */}
           <button
-              onClick={handleLogout}
-              className={`${linkStyle} ${inactiveLinkStyle} w-full`} // Reutilizamos los estilos
+            onClick={handleLogout}
+            className={`${linkStyle} ${inactiveLinkStyle} w-full`}
+            aria-label="Cerrar sesión"
+            title="Cerrar sesión"
           >
-              <LogOut {...iconProps} />
-              <span className="ml-4 font-semibold">Cerrar Sesión</span>
+            <LogOut {...iconProps} />
+            {!collapsed && <span className="ml-4 font-semibold">Cerrar Sesión</span>}
           </button>
       </div>
     </aside>
