@@ -112,7 +112,7 @@ export default function Sidebar() {
                 onClick={handleNavClick}
                 aria-label={link.label}
                 className={({ isActive }) =>
-                  `${linkStyle} ${isActive ? activeLinkStyle : inactiveLinkStyle}`
+                  `relative group ${linkStyle} ${isActive ? activeLinkStyle : inactiveLinkStyle}`
                 }
               >
                 <div className="relative">
@@ -121,8 +121,21 @@ export default function Sidebar() {
                     <span className="absolute -top-0.5 -right-0.5 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-slate-900" />
                   )}
                 </div>
+
+                {/* Texto normal cuando está expandido */}
                 {!collapsed && <span className="font-semibold">{link.label}</span>}
+
+                {/* Tooltip solo cuando está colapsado */}
+                {collapsed && (
+                  <span
+                    className="pointer-events-none absolute left-14 top-1/2 -translate-y-1/2 whitespace-nowrap rounded-md bg-slate-800/95 px-2 py-1 text-xs text-white opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100"
+                    role="tooltip"
+                  >
+                    {link.label}
+                  </span>
+                )}
               </NavLink>
+
             </li>
           ))}
         </ul>
